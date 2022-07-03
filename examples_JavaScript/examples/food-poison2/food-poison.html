@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Q-Learning - Food/Poison</title>
+    <meta name="description" content="Q-learning algorithm implementation and example in Javascript">
+    <meta name="keywords" content="Q-Learning, javascript, game">
+    <link rel="stylesheet" href="../style.css">
+    <script type="text/javascript" src="../../lib/seedrandom.js"></script>
+    <script type="text/javascript" src="../../q-learning.js"></script>
+</head>
+<body>
+
+<canvas id="canvas" width="300px" height="300px"></canvas>
+<div id="buttons">
+    <button onclick="slow()">slow</button>
+    <button onclick="fast()">fast</button>
+    <span id="score"></span>
+</div>
+<p>
+    Press fast to speed up.
+</p>
+<p>
+    This is a practical implementation of the artificial intelligence algorithm Q-Learning. The tutorial
+    <a href="http://mnemstudio.org/path-finding-q-learning-tutorial.htm">A Painless Q-Learning Tutorial</a> is a very nice introduction.
+    The Q-Learning maximizes the expected reward for an action.
+</p>
+
+<p>
+    The black circle represents an agent. Green circles represent food (+1) and gray circles represent poison (-1). 
+    Food and poison are inserted with the same probability.
+    The agent can move left, right or stay. The states are string representations of the objects 
+    in front of the agent, that's what he sees.
+</p>
+<p>
+    In some states, the exploration of new actions is done with a probability of 10%, if the outcomes of that action is not known.
+</p>
+<p>
+    We are using online learning, where training and using the algorithm are done simultaneously, i.e. we don't need to collect
+    considerable amounts of data before the algorithm is trained. A consequence is that in early stages the performance is poor.
+    In the beginning the outcome should be something like a random walk and as time goes by, the performance should be considerably better:
+    the agent not only avoids poison, but catch more food.
+    Simple changes to this code can produce agents which battle, chase others, run away or follow paths.
+</p>
+
+<script type="text/javascript" src="food-poison.js"></script>
+<script type="text/javascript">
+    const controller = new Controller();
+    const slowTime = 500
+    const fastTime = 20
+    var stepTime = slowTime
+
+    var sid = setTimeout(slow, stepTime);
+
+    function stepController(){
+        controller.step()
+        controller.draw(0.67*stepTime)
+    }
+    function slow(){
+        stepTime = slowTime
+        clearTimeout(sid)
+        stepController()
+        sid = setInterval(slow, stepTime);
+    }
+    function fast(){
+        stepTime = fastTime
+        clearTimeout(sid)
+        stepController()
+        sid = setInterval(fast, stepTime);
+    }
+</script>
+</body>
+</html>
