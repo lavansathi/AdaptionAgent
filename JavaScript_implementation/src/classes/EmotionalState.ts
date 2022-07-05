@@ -1,13 +1,13 @@
 export class EmotionalState {
     
     /*  Emotional States
-        0 - Happiness 
-        1 - Sadness
-        2 - Surprise
-        3 - Fear
-        4 - Anger
-        5 - Disgust (Towards something considered offensive or unpleasant)
-        6 - Contempt (The feeling that a person or thing is worthless)
+        0 - Happiness (+5)
+        1 - Sadness (0)
+        2 - Surprise (+2)
+        3 - Fear (0)
+        4 - Anger (-1)
+        5 - Disgust (-3)
+        6 - Contempt (-6)
     */
 
     private current_emotion;
@@ -22,7 +22,7 @@ export class EmotionalState {
     getCurrentEmotion = () => {
         return this.current_emotion;
     }
-    getAvailableStateCount = () => {
+    getAvailableState_Count = () => {
         return this.maxAvailableStates;
     }
 }
