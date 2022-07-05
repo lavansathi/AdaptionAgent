@@ -1,5 +1,8 @@
 #import libraries
+import sys
+
 import numpy as np
+np.set_printoptions(threshold=sys.maxsize)
 
 #define the shape of the environment (i.e., its states)
 element_1 = 3
@@ -17,7 +20,8 @@ action_count = 9
 #The value of each (state, action) pair is initialized to 0.
 q_values = np.zeros((element_1, element_2, element_3, emotional_states, action_count))
 
-#print(q_values)
+print("Q table")
+print(q_values)
 
 #numeric action codes:
 actions = [
