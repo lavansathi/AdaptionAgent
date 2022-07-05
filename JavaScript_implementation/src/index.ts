@@ -3,93 +3,101 @@ import { EmotionalState } from "./classes/EmotionalState";
 import { UIElement } from "./classes/UIElement";
 
 function createNDimArray(dimensions:any) {
-    if (dimensions.length > 0) {
-        var dim = dimensions[0];
-        var rest = dimensions.slice(1);
-        var newArray = new Array();
-        for (var i = 0; i < dim; i++) {
-            newArray[i] = createNDimArray(rest);
-        }
-        return newArray;
-     } else {
-        return 0;
-     }
+  if (dimensions.length > 0) {
+    var dim = dimensions[0];
+    var rest = dimensions.slice(1);
+    var newArray = new Array();
+    for (var i = 0; i < dim; i++) {
+        newArray[i] = createNDimArray(rest);
+    }
+    return newArray;
+  } else {
+    return 0;
+  }
  }
 
 class Agent {
-    private emotionalState:EmotionalState = new EmotionalState(0);
-    private UIElements:UIElement[] = [];
-    private gamma = 0.9;
-    private alpha = 0.9;
-    private epsilon = 0.9;
-    private q_values:any[] = [];
-    private rewards:any[] = [];
-    private actions:string[] = []
+  private emotionalState:EmotionalState = new EmotionalState();
+  private UIElements:UIElement[] = [];
+  private gamma;
+  private alpha;
+  private epsilon;
+  private q_values:any[] = [];
+  private rewards:any[] = [];
+  private actions:string[] = []
 
-    constructor(){
-    }
+  constructor(alpha:number,gamma:number,epsilon:number){  
+    this.alpha = alpha;
+    this.gamma = gamma;
+    this.epsilon = epsilon;
+  }
     
-    addUIElement = (uiElement:UIElement) => {
-        this.UIElements.push(uiElement)
-    }
-    getUIElements = () => {
-        return this.UIElements;
-    }
-    getUIElement = (element:number) => {
-        return this.UIElements[element];
-    }
-    setEmotionalState = (emotionalState:EmotionalState) => {
-        this.emotionalState = emotionalState; 
-    }
-    getEmotionalState = () => {
-        return this.emotionalState;
-    }
-    setGamma = (discounting_factor:number) => {
-        this.gamma = discounting_factor;
-    }
-    setAlpha = (learning_rate:number) => {
-        this.alpha = learning_rate;
-    }
-    getRewards = () => {
-        return this.rewards;
-    }
-    getQ_Values = () => {
-        return this.q_values;
-    }
-    getActions = () => {
-        return this.actions;
-    }
+  addUIElement = (uiElement:UIElement) => {
+    this.UIElements.push(uiElement)
+  }
+  getUIElement = (element:number) => {
+    return this.UIElements[element];
+  }
+  getUIElements = () => {
+    return this.UIElements;
+  }
+  getEmotionalState = () => {
+    return this.emotionalState;
+  }
+  setGamma = (discounting_factor:number) => {
+    this.gamma = discounting_factor;
+  }
+  getGamma = () => {
+    return this.gamma;
+  }
+  setAlpha = (learning_rate:number) => {
+    this.alpha = learning_rate;
+  }
+  getAplha = () => {
+    return this.alpha;
+  }
+  getRewards = () => {
+    // returning content of rewards without "outermost" array
+    return this.rewards[0];
+  }
+  getQ_Values = () => {
+    return this.q_values;
+  }
+  getActions = () => {
+    return this.actions;
+  }
 
-    is_terminal_state = () => {
-        let e1 = this.getUIElement(0).getProperty();
-        let e2 = this.getUIElement(1).getProperty();
-        let e3 = this.getUIElement(2).getProperty();
-        let e4 = this.getUIElement(3).getProperty();
-        let emotional_state = this.getEmotionalState().getCurrentEmotion();
-        if (this.rewards[0][e1][e2][e3][e4][emotional_state] == 1){
-            return true
-        } else {
-            return false
-        }
+  is_terminal_state = () => {
+    let e1 = this.getUIElement(0).getProperty();
+    let e2 = this.getUIElement(1).getProperty();
+    let e3 = this.getUIElement(2).getProperty();
+    let e4 = this.getUIElement(3).getProperty();
+    let emotional_state = this.getEmotionalState().getCurrentEmotion();
     
+    if (this.getRewards()[e1][e2][e3][e4][emotional_state] == 1){
+      return true
+    } else {
+      return false
     }
-    get_starting_state = () => {
-      // choose a random non-terminal state for the elements
+  }
+
+  get_starting_state = () => {
+    // choose a random non-terminal state for the elements, depending on number of states
+    this.getUIElement(0).setProperty(Math.floor(Math.random() * this.getUIElement(0).getPropertyCount()));
+    this.getUIElement(1).setProperty(Math.floor(Math.random() * this.getUIElement(1).getPropertyCount()));
+    this.getUIElement(2).setProperty(Math.floor(Math.random() * this.getUIElement(2).getPropertyCount()));
+    this.getUIElement(3).setProperty(Math.floor(Math.random() * this.getUIElement(3).getPropertyCount()));
+    this.getEmotionalState().setCurrentEmotionalState(Math.floor(Math.random() * this.getEmotionalState().getAvailableStateCount()))
+    
+    while(this.is_terminal_state()){
       this.getUIElement(0).setProperty(Math.floor(Math.random() * this.getUIElement(0).getPropertyCount()));
       this.getUIElement(1).setProperty(Math.floor(Math.random() * this.getUIElement(1).getPropertyCount()));
       this.getUIElement(2).setProperty(Math.floor(Math.random() * this.getUIElement(2).getPropertyCount()));
       this.getUIElement(3).setProperty(Math.floor(Math.random() * this.getUIElement(3).getPropertyCount()));
       this.getEmotionalState().setCurrentEmotionalState(Math.floor(Math.random() * this.getEmotionalState().getAvailableStateCount()))
-      
-      while(this.is_terminal_state()){
-        this.getUIElement(0).setProperty(Math.floor(Math.random() * this.getUIElement(0).getPropertyCount()));
-        this.getUIElement(1).setProperty(Math.floor(Math.random() * this.getUIElement(1).getPropertyCount()));
-        this.getUIElement(2).setProperty(Math.floor(Math.random() * this.getUIElement(2).getPropertyCount()));
-        this.getUIElement(3).setProperty(Math.floor(Math.random() * this.getUIElement(3).getPropertyCount()));
-        this.getEmotionalState().setCurrentEmotionalState(Math.floor(Math.random() * this.getEmotionalState().getAvailableStateCount()))
-      }
-      //return this.getUIElement(0),this.getUIElement(1),this.getUIElement(2),this.getEmotionalState()
     }
+    //return this.getUIElement(0),this.getUIElement(1),this.getUIElement(2),this.getEmotionalState()
+  }
 
     update_user_emotion = () => {
       // This function will get the current emotional state of the user
@@ -315,7 +323,7 @@ class Agent {
     }
 }
 
-const agent = new Agent()
+const agent = new Agent(0.9,0.9,0.9)
 
 agent.addUIElement(new UIElement(3,2,'element1'))
 agent.addUIElement(new UIElement(3,2,'element2'))
