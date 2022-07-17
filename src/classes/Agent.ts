@@ -20,6 +20,8 @@ export class Agent {
     this.UIElements.push(new UIElement(3,2,'element2'))
     this.UIElements.push(new UIElement(3,2,'element3'))
     this.UIElements.push(new UIElement(3,2,'element4'))
+    this.UIElements.push(new UIElement(3,2,'element5'))
+
   }
     
   addUIElement = (uiElement:UIElement) => {
@@ -78,9 +80,10 @@ export class Agent {
     let e2 = this.getUIElement(1).getState();
     let e3 = this.getUIElement(2).getState();
     let e4 = this.getUIElement(3).getState();
+    let e5 = this.getUIElement(4).getState();
     let emotional_state = this.getEmotionalState().getCurrentEmotion();
-    
-    if (this.getRewards()[e1][e2][e3][e4][emotional_state] == 1){
+    if (this.getRewards()[e1][e2][e3][e4][e5][emotional_state] === 1){
+    // if (this.getEmotionalState().getCurrentEmotion() === 0 || this.getEmotionalState().getCurrentEmotion() === 2){
       return true
     } else {
       return false
@@ -92,6 +95,7 @@ export class Agent {
     let e2 = this.getUIElement(1);
     let e3 = this.getUIElement(2);
     let e4 = this.getUIElement(3);
+    let e5 = this.getUIElement(4);
     let emotion = this.getEmotionalState();
 
     // choose a random non-terminal state for the elements
@@ -99,6 +103,7 @@ export class Agent {
     e2.setState(Math.floor(Math.random() * e2.getState_Count()));
     e3.setState(Math.floor(Math.random() * e3.getState_Count()));
     e4.setState(Math.floor(Math.random() * e4.getState_Count()));
+    e5.setState(Math.floor(Math.random() * e5.getState_Count()));
     emotion.setCurrentEmotionalState(Math.floor(Math.random() * emotion.getAvailableState_Count()))
 
     // if terminal find new state
@@ -107,6 +112,7 @@ export class Agent {
       e2.setState(Math.floor(Math.random() * e2.getState_Count()));
       e3.setState(Math.floor(Math.random() * e3.getState_Count()));
       e4.setState(Math.floor(Math.random() * e4.getState_Count()));
+      e5.setState(Math.floor(Math.random() * e5.getState_Count()));
       emotion.setCurrentEmotionalState(Math.floor(Math.random() * emotion.getAvailableState_Count()))
     }
   }
@@ -119,8 +125,10 @@ export class Agent {
     let e2 = this.getUIElement(1).getState();
     let e3 = this.getUIElement(2).getState();
     let e4 = this.getUIElement(3).getState();
+    let e5 = this.getUIElement(4).getState();
 
-    let checkArr = [e1,e2,e3,e4];
+
+    let checkArr = [e1,e2,e3,e4,e5];
     let count:any = {};
 
     for (const element of checkArr) {
@@ -130,69 +138,55 @@ export class Agent {
         count[element] = 1;
       }
     }
+    
 
     // all state 0, emotional state 5 or 6
-    if (count[0] == 4){
+    if (count[0] == 5){
       // Disgust or contempt
       this.getEmotionalState().setCurrentEmotionalState(Math.floor(Math.random() * (6 - 5 + 1)) + 5)
       return
-    }
-
-    // all state 2, emotional state 5 or 6
-    if (count[2] == 4){
+    } else if (count[2] == 5){
       // Disgust or contempt
       this.getEmotionalState().setCurrentEmotionalState(Math.floor(Math.random() * (6 - 5 + 1)) + 5)
       return
-    }
-
-    // most states are 0, emotional state 4
-    if ( count[0] == 3){
+    } else if ( count[0] >= 3 || count[2] >= 3){
       // Anger
       this.getEmotionalState().setCurrentEmotionalState(4)
       return
-    }
-
-    // most states are 2, emotional state 4
-    if ( count[2] == 3){
-      //Anger
-      this.getEmotionalState().setCurrentEmotionalState(4)
+    } else if(count[1] == 4){
+      // surprised
+      this.getEmotionalState().setCurrentEmotionalState(2)
       return
-    }
-
-    // "optimal" state reached meaning all elements are in state 1
-    if(count[1] >= 3){
-      if(Math.random() > 0.4){
-        // happines
-        this.getEmotionalState().setCurrentEmotionalState(0)
-      } else {
-        // surprised
-        this.getEmotionalState().setCurrentEmotionalState(2)
-      }
+    } else if(count[1] == 5){
+      // happines
+      this.getEmotionalState().setCurrentEmotionalState(0)
       return
-    }
-
-    // If non of the above conditions are met then choose a random neutral state
-    if(Math.random() <= 0.5){
-      // Sadness (neutrak)
-      this.getEmotionalState().setCurrentEmotionalState(1)
     } else {
-      // Sadness (neutrak)
-      this.getEmotionalState().setCurrentEmotionalState(3)
+      // If non of the above conditions are met then choose a random neutral state
+      if(Math.random() <= 0.5){
+        // Sadness (neutral)
+        this.getEmotionalState().setCurrentEmotionalState(1)
+      } else {
+        // Fear (neutral)
+        this.getEmotionalState().setCurrentEmotionalState(3)
+      }
     }
-
   }
 
   get_next_action = (epsilon:number):number => {
     //Exploration vs explotation, the rate of exploration is decided by epsilon (0.9 epsilon = 10% exploration)
-    if(Math.random() < epsilon){
+    let random = Math.random()
+    if(random < epsilon){
       let e1 = this.getUIElement(0).getState();
       let e2 = this.getUIElement(1).getState();
       let e3 = this.getUIElement(2).getState();
       let e4 = this.getUIElement(3).getState();
+      let e5 = this.getUIElement(3).getState();
+
       let emotion = this.getEmotionalState().getCurrentEmotion();
 
       //Getting action array for specific state, choosing the actions index of action with highest value
-      let a = this.getQ_Values()[e1][e2][e3][e4][emotion]
+      let a = this.getQ_Values()[e1][e2][e3][e4][e5][emotion]
       let index_of_best_action = a.reduce((iMax:any, x:any, i:any, arr:any) => x > arr[iMax] ? i : iMax, 0);
 
       return index_of_best_action
@@ -207,7 +201,9 @@ export class Agent {
     let e2 = this.getUIElement(1);
     let e3 = this.getUIElement(2);
     let e4 = this.getUIElement(3);
-    
+    let e5 = this.getUIElement(4);
+
+
     if(this.actions[action_index] == 'element1_action0' && e1.getState() != 0){
       e1.setState(0)
     } else if(this.actions[action_index] == 'element1_action1' && e1.getState() != 1){
@@ -232,6 +228,12 @@ export class Agent {
       e4.setState(1)
     } else if(this.actions[action_index] == 'element4_action2' && e4.getState() != 2){
       e4.setState(2)
+    } else if(this.actions[action_index] == 'element5_action0' && e5.getState() != 0){
+      e5.setState(0)
+    } else if(this.actions[action_index] == 'element5_action1' && e5.getState() != 1){
+      e5.setState(1)
+    } else if(this.actions[action_index] == 'element5_action2' && e5.getState() != 2){
+      e5.setState(2)
     } else {
       // not 100% sure if this is needed but uncase agent want to take action resulting in its current state
       this.get_next_state(this.get_next_action(this.getEpsilon()))
@@ -248,7 +250,7 @@ export class Agent {
       var rest = dimensions.slice(1);
       var newArray = new Array();
       for (var i = 0; i < dim; i++) {
-          newArray[i] = this.createNDimArray(rest);
+        newArray[i] = this.createNDimArray(rest);
       }
       return newArray;
     } else {
@@ -274,6 +276,7 @@ export class Agent {
       this.getUIElement(1).getState_Count(),
       this.getUIElement(2).getState_Count(),
       this.getUIElement(3).getState_Count(),
+      this.getUIElement(4).getState_Count(),
       this.getEmotionalState().getAvailableState_Count(),
       this.getActions().length
     ])
@@ -289,50 +292,56 @@ export class Agent {
       this.getUIElement(1).getState_Count(),
       this.getUIElement(2).getState_Count(),
       this.getUIElement(3).getState_Count(),
+      this.getUIElement(4).getState_Count(),
       this.getEmotionalState().getAvailableState_Count(),
   ])
   //@ts-ignore
   this.setRewards(rewardArr)
 
     let rewardArray = this.getRewards()
-    // [Element1][Element2][Element3][Element4][Emotional_State]
+    // [Element1][Element2][Element3][Element4][Element5][Emotional_State]
     for (let m = 0; m < this.getUIElement(0).getState_Count(); m++) {
       for (let n = 0; n < this.getUIElement(1).getState_Count(); n++) {
         for (let o = 0; o < this.getUIElement(2).getState_Count(); o++) {
           for (let p = 0; p < this.getUIElement(3).getState_Count(); p++) {
-            // Negative rewards
-            rewardArray[m][n][o][p][4] = -1;
-            rewardArray[m][n][o][p][5] = -3;
-            rewardArray[m][n][o][p][6] = -6;
+            for (let q = 0; q < this.getUIElement(3).getState_Count(); q++) {
+              // Negative rewards
+              rewardArray[m][n][o][p][q][4] = -1;
+              rewardArray[m][n][o][p][q][5] = -3;
+              rewardArray[m][n][o][p][q][6] = -6;
 
-            // TESTING THIS
-            // Positive rewards
-            rewardArray[m][n][o][p][0] = 1;
-            rewardArray[m][n][o][p][2] = 1;
+              // TESTING THIS
+              // Positive rewards
+              rewardArray[m][n][o][p][q][0] = 1;
+              rewardArray[m][n][o][p][q][2] = 1;
+            }
           }
         }
       }
     }
+  }
 
-    
-    // Positive rewards
-    //rewardArray[1][1][1][1][0] = 1;
-    //rewardArray[1][1][1][1][1] = 1;
-    //rewardArray[1][1][1][1][2] = 1;
-    
+  populateQtable = () => {
+    // Setting initial values for the Q-table
+    this.getQ_Values()[0][0][0][0][0][4][1] = 1
+    this.getQ_Values()[1][0][0][0][0][4][3] = 1
+    this.getQ_Values()[1][1][0][0][0][4][6] = 1
   }
 
   setupAgent = () => {
     this.setupActions();
     this.setupQtable();
+   // this.populateQtable();
     this.setupRewards();
   }
 
-  get_best_adaption = (e1_start:number, e2_start:number, e3_start:number, e4_start:number,emotion_start:number):number[] => {
+  get_best_adaption = (e1_start:number, e2_start:number, e3_start:number, e4_start:number, e5_start:number,emotion_start:number):number[] => {
     this.getUIElement(0).setState(e1_start);
     this.getUIElement(1).setState(e2_start);
     this.getUIElement(2).setState(e3_start);
     this.getUIElement(3).setState(e4_start);
+    this.getUIElement(4).setState(e5_start);
+
     this.getEmotionalState().setCurrentEmotionalState(emotion_start);
     let best_adaption:any[] = [];
     if(this.is_terminal_state()){
@@ -342,9 +351,11 @@ export class Agent {
       let e2 = this.getUIElement(1).getState();
       let e3 = this.getUIElement(2).getState();
       let e4 = this.getUIElement(3).getState();
+      let e5 = this.getUIElement(4).getState();
+
       let emotion = this.getEmotionalState().getCurrentEmotion();
-      
-      best_adaption.push([e1,e2,e3,e4,emotion])
+      //console.log(e1,e2,e3,e4,emotion)
+      best_adaption.push([e1,e2,e3,e4,e5,emotion])
       // Continue until goal
       let action_index;
       while(!this.is_terminal_state()){
@@ -357,6 +368,7 @@ export class Agent {
           this.getUIElement(1).getState(),
           this.getUIElement(2).getState(),
           this.getUIElement(3).getState(),
+          this.getUIElement(4).getState(),
           this.getEmotionalState().getCurrentEmotion()
         ])
       }
@@ -376,6 +388,7 @@ export class Agent {
         let old_e2 = this.getUIElement(1).getState()
         let old_e3 = this.getUIElement(2).getState()
         let old_e4 = this.getUIElement(3).getState()
+        let old_e5 = this.getUIElement(4).getState()
         let old_emotion = this.getEmotionalState().getCurrentEmotion()
         // Move to next state
         this.get_next_state(action_index)
@@ -383,16 +396,69 @@ export class Agent {
 
         // Receive reward for moving to new state
         // Calculate temporal_difference
-        let reward = this.getRewards()[this.getUIElement(0).getState()][this.getUIElement(1).getState()][this.getUIElement(2).getState()][this.getUIElement(3).getState()][this.getEmotionalState().getCurrentEmotion()]
-        let old_q_value = this.getQ_Values()[old_e1][old_e2][old_e3][old_e4][old_emotion][action_index]
-        let temporal_difference = reward + (this.getGamma() * Math.max(...this.getQ_Values()[this.getUIElement(0).getState()][this.getUIElement(1).getState()][this.getUIElement(2).getState()][this.getUIElement(3).getState()][this.getEmotionalState().getCurrentEmotion()])) - old_q_value
+        let reward = this.getRewards()[this.getUIElement(0).getState()][this.getUIElement(1).getState()][this.getUIElement(2).getState()][this.getUIElement(3).getState()][this.getUIElement(4).getState()][this.getEmotionalState().getCurrentEmotion()]
+        let old_q_value = this.getQ_Values()[old_e1][old_e2][old_e3][old_e4][old_e5][old_emotion][action_index]
+        let temporal_difference = reward + (this.getGamma() * Math.max(...this.getQ_Values()[this.getUIElement(0).getState()][this.getUIElement(1).getState()][this.getUIElement(2).getState()][this.getUIElement(3).getState()][this.getUIElement(4).getState()][this.getEmotionalState().getCurrentEmotion()])) - old_q_value
         
         // Update Q-value for the previous state and action pair
         let new_q_value = old_q_value + (this.getAplha() * temporal_difference)
-        this.getQ_Values()[old_e1][old_e2][old_e3][old_e4][old_emotion][action_index] = new_q_value
+        this.getQ_Values()[old_e1][old_e2][old_e3][old_e4][old_e5][old_emotion][action_index] = new_q_value
       }
     }
     console.log('Training Complete!')
   }
 
+  run = (e1_start:number, e2_start:number, e3_start:number, e4_start:number,e5_start:number,emotion_start:number) => {
+    console.log('Agent Started')
+    let adaptionCounter = 0;
+    let action_index;
+    this.getUIElement(0).setState(e1_start);
+    this.getUIElement(1).setState(e2_start);
+    this.getUIElement(2).setState(e3_start);
+    this.getUIElement(3).setState(e4_start);
+    this.getUIElement(4).setState(e5_start);
+
+    this.getEmotionalState().setCurrentEmotionalState(emotion_start);
+    //for (let i = 0; i < training_range; i++) {
+      //this.get_starting_state();
+      
+        while(!this.is_terminal_state()){
+          //setTimeout(() => {
+          console.log('Agent Taking action')
+          // chose new action
+          action_index = this.get_next_action(this.getEpsilon())
+          // Store old state
+          let old_e1 = this.getUIElement(0).getState()
+          let old_e2 = this.getUIElement(1).getState()
+          let old_e3 = this.getUIElement(2).getState()
+          let old_e4 = this.getUIElement(3).getState()
+          let old_e5 = this.getUIElement(4).getState()
+          let old_emotion = this.getEmotionalState().getCurrentEmotion()
+          // Move to next state
+          this.get_next_state(action_index)
+          // State now updated
+  
+        // Receive reward for moving to new state
+        // Calculate temporal_difference
+        let reward = this.getRewards()[this.getUIElement(0).getState()][this.getUIElement(1).getState()][this.getUIElement(2).getState()][this.getUIElement(3).getState()][this.getUIElement(4).getState()][this.getEmotionalState().getCurrentEmotion()]
+        let old_q_value = this.getQ_Values()[old_e1][old_e2][old_e3][old_e4][old_e5][old_emotion][action_index]
+        let temporal_difference = reward + (this.getGamma() * Math.max(...this.getQ_Values()[this.getUIElement(0).getState()][this.getUIElement(1).getState()][this.getUIElement(2).getState()][this.getUIElement(3).getState()][this.getUIElement(4).getState()][this.getEmotionalState().getCurrentEmotion()])) - old_q_value
+        
+        // Update Q-value for the previous state and action pair
+        let new_q_value = old_q_value + (this.getAplha() * temporal_difference)
+        this.getQ_Values()[old_e1][old_e2][old_e3][old_e4][old_e5][old_emotion][action_index] = new_q_value
+          console.log(this.getUIElement(0).getState(),
+                      this.getUIElement(1).getState(),
+                      this.getUIElement(2).getState(),
+                      this.getUIElement(3).getState(),
+                      this.getUIElement(4).getState(),
+                      this.getEmotionalState().getCurrentEmotion())
+          adaptionCounter++;
+        }
+
+        console.log('Agent Done')
+        console.log('Adaptions to goal')
+        console.log(adaptionCounter)
+     
+  }
 }
