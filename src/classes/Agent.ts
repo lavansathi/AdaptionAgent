@@ -14,7 +14,7 @@ export class Agent {
   private rewardSum:number = 0;
   private socket = io("ws://localhost:3000");
 
-  constructor(alpha:number,gamma:number,epsilon:number){  
+  constructor(alpha:number,gamma:number,epsilon:number){
     this.alpha = alpha;
     this.gamma = gamma;
     this.epsilon = epsilon;
@@ -25,6 +25,7 @@ export class Agent {
     this.UIElements.push(new UIElement(2,0,'element4'))
     this.UIElements.push(new UIElement(2,0,'element5'))
 
+    
   }
     
   addUIElement = (uiElement:UIElement) => {
@@ -91,6 +92,8 @@ export class Agent {
       this.getEmotionalState().getCurrentEmotion()]
   }
 
+  delay = (ms:number) => new Promise(res => setTimeout(res, ms));
+
   is_terminal_state = () => {
     let e1 = this.getUIElement(0).getState();
     let e2 = this.getUIElement(1).getState();
@@ -135,17 +138,28 @@ export class Agent {
     }
   }
 
-  update_user_emotion = () => {
+  update_user_emotion = async () => {
     let e1 = this.getUIElement(0).getState();
     let e2 = this.getUIElement(1).getState();
     let e3 = this.getUIElement(2).getState();
     let e4 = this.getUIElement(3).getState();
     let e5 = this.getUIElement(4).getState();
 
-
     let checkArr = [e1,e2,e3,e4,e5];
-    let count:any = {};
 
+    this.socket.emit('requestEmotion', 'ready', {state:checkArr})
+    
+
+    await new Promise(resolve => {
+      this.socket.on('responseEmotion', (emotion:number) => {
+        this.getEmotionalState().setCurrentEmotionalState(emotion);
+        resolve(emotion)
+      })
+    });
+
+    /*
+
+    let count:any = {};
     for (const element of checkArr) {
       if (count[element]) {
         count[element] += 1;
@@ -185,6 +199,8 @@ export class Agent {
         this.getEmotionalState().setCurrentEmotionalState(3)
       }
     }
+    */
+    
   }
 
   get_next_action = (epsilon:number):number => {
@@ -238,10 +254,12 @@ export class Agent {
     } else if(this.actions[action_index] == 'element5_action1' && e5.getState() != 1){
       e5.setState(1)
     } else if(this.actions[action_index] == 'do_Nothing'){
+      this.update_user_emotion();
       return
     } else {
       // not 100% sure if this is needed but uncase agent want to take action resulting in its current state
       this.get_next_state(this.get_next_action(this.getEpsilon()))
+      return
     }
 
     // Update emotional state used as feedback to the action
@@ -434,7 +452,15 @@ export class Agent {
     console.log('Training Complete!')
   }
 
-  run = (e1_start:number, e2_start:number, e3_start:number, e4_start:number,e5_start:number) => {
+  run = async (e1_start:number, e2_start:number, e3_start:number, e4_start:number,e5_start:number) => {
+
+    while(!this.socket.connected){
+      console.log("Waiting for socket connection")
+      await this.delay(3000)
+    }
+    
+    console.log(`connected to socket with id: ${this.socket.id}`)
+    
     let adaptionCounter = 0;
     let action_index;
     this.getUIElement(0).setState(e1_start);
@@ -442,7 +468,7 @@ export class Agent {
     this.getUIElement(2).setState(e3_start);
     this.getUIElement(3).setState(e4_start);
     this.getUIElement(4).setState(e5_start);
-    this.update_user_emotion();
+    await this.update_user_emotion();
 
     console.log('Initial State:')
     console.log(this.getStateSpace())
@@ -482,9 +508,10 @@ export class Agent {
         // Stop Condition
         adaptionCounter++;
 
-        if(adaptionCounter === 1000) clearInterval(intervalID)
-
+        if(adaptionCounter === 1000){
+          clearInterval(intervalID)
+          console.log("End")
+        } 
     },1000*0.05)
-    console.log("End")
   }
 }
