@@ -1,5 +1,6 @@
 import { EmotionalState } from "./EmotionalState";
 import { UIElement } from "./UIElement";
+import { io } from "socket.io-client"
 
 export class Agent {
   private emotionalState:EmotionalState = new EmotionalState();
@@ -11,6 +12,7 @@ export class Agent {
   private rewards:any[] = [];
   private actions:string[] = []
   private rewardSum:number = 0;
+  private socket = io("ws://localhost:3000");
 
   constructor(alpha:number,gamma:number,epsilon:number){  
     this.alpha = alpha;
@@ -79,6 +81,15 @@ export class Agent {
   getRewardSum = () => {
     return this.rewardSum;
   }
+  getStateSpace = () => {
+    return [
+      this.getUIElement(0).getState(),
+      this.getUIElement(1).getState(),
+      this.getUIElement(2).getState(),
+      this.getUIElement(3).getState(),
+      this.getUIElement(4).getState(),
+      this.getEmotionalState().getCurrentEmotion()]
+  }
 
   is_terminal_state = () => {
     let e1 = this.getUIElement(0).getState();
@@ -125,9 +136,6 @@ export class Agent {
   }
 
   update_user_emotion = () => {
-    // This function will get the current emotional state of the user
-    // using openFace API in the real implementation
-    // currently just returning some emotionalState based on UIElements
     let e1 = this.getUIElement(0).getState();
     let e2 = this.getUIElement(1).getState();
     let e3 = this.getUIElement(2).getState();
@@ -146,7 +154,6 @@ export class Agent {
       }
     }
     
-
     // all state 0, emotional state 5 or 6
     if (count[0] == 5){
       // Disgust or contempt
@@ -189,7 +196,6 @@ export class Agent {
       let e3 = this.getUIElement(2).getState();
       let e4 = this.getUIElement(3).getState();
       let e5 = this.getUIElement(4).getState();
-
       let emotion = this.getEmotionalState().getCurrentEmotion();
 
       //Getting action array for specific state, choosing the actions index of action with highest value
@@ -209,7 +215,7 @@ export class Agent {
     let e3 = this.getUIElement(2);
     let e4 = this.getUIElement(3);
     let e5 = this.getUIElement(4);
-
+    
 
     if(this.actions[action_index] == 'element1_action0' && e1.getState() != 0){
       e1.setState(0)
@@ -231,6 +237,8 @@ export class Agent {
       e5.setState(0)
     } else if(this.actions[action_index] == 'element5_action1' && e5.getState() != 1){
       e5.setState(1)
+    } else if(this.actions[action_index] == 'do_Nothing'){
+      return
     } else {
       // not 100% sure if this is needed but uncase agent want to take action resulting in its current state
       this.get_next_state(this.get_next_action(this.getEpsilon()))
@@ -263,6 +271,7 @@ export class Agent {
             actionsArr.push('element'+(i+1)+'_action'+(j))
         }
     }
+    actionsArr.push('do_Nothing');
     this.setActions(actionsArr);
   }
 
@@ -425,8 +434,7 @@ export class Agent {
     console.log('Training Complete!')
   }
 
-  run = (e1_start:number, e2_start:number, e3_start:number, e4_start:number,e5_start:number,emotion_start:number) => {
-    console.log('Agent Started')
+  run = (e1_start:number, e2_start:number, e3_start:number, e4_start:number,e5_start:number) => {
     let adaptionCounter = 0;
     let action_index;
     this.getUIElement(0).setState(e1_start);
@@ -434,28 +442,27 @@ export class Agent {
     this.getUIElement(2).setState(e3_start);
     this.getUIElement(3).setState(e4_start);
     this.getUIElement(4).setState(e5_start);
+    this.update_user_emotion();
 
-    this.getEmotionalState().setCurrentEmotionalState(emotion_start);
-    //for (let i = 0; i < training_range; i++) {
-      //this.get_starting_state();
-      
-        while(!this.is_terminal_state()){
-          //setTimeout(() => {
-          console.log('Agent Taking action')
-          // chose new action
-          action_index = this.get_next_action(this.getEpsilon())
-          // Store old state
-          let old_e1 = this.getUIElement(0).getState()
-          let old_e2 = this.getUIElement(1).getState()
-          let old_e3 = this.getUIElement(2).getState()
-          let old_e4 = this.getUIElement(3).getState()
-          let old_e5 = this.getUIElement(4).getState()
-          let old_emotion = this.getEmotionalState().getCurrentEmotion()
-          // Move to next state
-          this.get_next_state(action_index)
-          // State now updated
-  
-        // Receive reward for moving to new state
+    console.log('Initial State:')
+    console.log(this.getStateSpace())
+    console.log()
+
+    let intervalID = setInterval(() => {
+        
+        action_index = this.get_next_action(this.getEpsilon())
+        console.log('Agent Taking action: '+this.actions[action_index])
+
+        let old_e1 = this.getUIElement(0).getState()
+        let old_e2 = this.getUIElement(1).getState()
+        let old_e3 = this.getUIElement(2).getState()
+        let old_e4 = this.getUIElement(3).getState()
+        let old_e5 = this.getUIElement(4).getState()
+        let old_emotion = this.getEmotionalState().getCurrentEmotion()
+
+        // Move to next state
+        this.get_next_state(action_index)
+
         // Calculate temporal_difference
         let reward = this.getRewardsTable()[this.getUIElement(0).getState()][this.getUIElement(1).getState()][this.getUIElement(2).getState()][this.getUIElement(3).getState()][this.getUIElement(4).getState()][this.getEmotionalState().getCurrentEmotion()]
         this.setRewardSum(reward)
@@ -465,19 +472,19 @@ export class Agent {
         // Update Q-value for the previous state and action pair
         let new_q_value = old_q_value + (this.getAplha() * temporal_difference)
         this.getQ_Values()[old_e1][old_e2][old_e3][old_e4][old_e5][old_emotion][action_index] = new_q_value
-        console.log(this.getRewardSum())
-        console.log(this.getUIElement(0).getState(),
-                      this.getUIElement(1).getState(),
-                      this.getUIElement(2).getState(),
-                      this.getUIElement(3).getState(),
-                      this.getUIElement(4).getState(),
-                      this.getEmotionalState().getCurrentEmotion())
-          adaptionCounter++;
-        }
+        
+        console.log("Adaption Count: "+adaptionCounter)
+        console.log("New State:")
+        console.log(this.getStateSpace())
+        console.log("Total Reward: "+this.getRewardSum())
+        console.log()
 
-        console.log('Agent Done')
-        console.log('Adaptions to goal')
-        console.log(adaptionCounter)
-     
+        // Stop Condition
+        adaptionCounter++;
+
+        if(adaptionCounter === 1000) clearInterval(intervalID)
+
+    },1000*0.05)
+    console.log("End")
   }
 }
