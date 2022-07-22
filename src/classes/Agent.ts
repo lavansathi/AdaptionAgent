@@ -515,7 +515,6 @@ export class Agent {
           console.log("End")
         }
         test(this.getStateSpace())
-        return this.getStateSpace();
     },1000*10)
 
   }
