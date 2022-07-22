@@ -4,6 +4,7 @@ import util from 'util';
 
 const test = (state:number[]) => {
   console.log(state)
+  console.log()
 }
 
 const uiElementArr = [
