@@ -26,18 +26,21 @@ export class UIElement {
     private name:string;
 
     constructor(p_count:number, current_property:number, name:string){
-        this.property_count = p_count;
-        this.current_property = current_property;
-        this.name = name;
+      this.property_count = p_count;
+      this.current_property = current_property;
+      this.name = name;
     }
 
     setState = (property:number) => {
-        this.current_property = property;
+      this.current_property = property;
     }
     getState = () => {
-        return this.current_property;
+      return this.current_property;
     }
     getState_Count = () => {
-        return this.property_count;
+      return this.property_count;
+    }
+    getName = () => {
+      return this.name;
     }
 }
