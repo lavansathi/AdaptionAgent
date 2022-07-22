@@ -147,6 +147,8 @@ export class Agent {
 
     let checkArr = [e1,e2,e3,e4,e5];
 
+    /*
+
     this.socket.emit('requestEmotion', 'ready', {state:checkArr})
     
 
@@ -156,8 +158,8 @@ export class Agent {
         resolve(emotion)
       })
     });
-
-    /*
+    */
+    
 
     let count:any = {};
     for (const element of checkArr) {
@@ -171,21 +173,27 @@ export class Agent {
     // all state 0, emotional state 5 or 6
     if (count[0] == 5){
       // Disgust or contempt
-      this.getEmotionalState().setCurrentEmotionalState(Math.floor(Math.random() * (6 - 5 + 1)) + 5)
+      this.getEmotionalState().setCurrentEmotionalState(6)
       return
-    } else if (count[2] == 5){
+    } else if (count[1] == 5){
       // Disgust or contempt
-      this.getEmotionalState().setCurrentEmotionalState(Math.floor(Math.random() * (6 - 5 + 1)) + 5)
+      this.getEmotionalState().setCurrentEmotionalState(6)
+      return
+    } else if(count[0] == 4){
+      this.getEmotionalState().setCurrentEmotionalState(5)
+      return
+    } else if(count[1] == 4){
+      this.getEmotionalState().setCurrentEmotionalState(5)
       return
     } else if ( count[0] >= 3 || count[2] >= 3){
       // Anger
       this.getEmotionalState().setCurrentEmotionalState(4)
       return
-    } else if(count[1] == 4){
+    } else if(count[0] == 3){
       // surprised
       this.getEmotionalState().setCurrentEmotionalState(2)
       return
-    } else if(count[1] == 5){
+    } else if(count[1] == 3){
       // happines
       this.getEmotionalState().setCurrentEmotionalState(0)
       return
@@ -199,7 +207,7 @@ export class Agent {
         this.getEmotionalState().setCurrentEmotionalState(3)
       }
     }
-    */
+    
     
   }
 
@@ -338,17 +346,6 @@ export class Agent {
               rewardArray[m][n][o][p][q][4] = -1;
               rewardArray[m][n][o][p][q][5] = -3;
               rewardArray[m][n][o][p][q][6] = -6;
-
-              /*  Emotional States
-                0 - Happiness (+5)
-                1 - Sadness (0)
-                2 - Surprise (+2)
-                3 - Fear (0)
-                4 - Anger (-1)
-                5 - Disgust (-3)
-                6 - Contempt (-6)
-            */
-
             }
           }
         }
@@ -452,8 +449,9 @@ export class Agent {
     console.log('Training Complete!')
   }
 
-  run = async (e1_start:number, e2_start:number, e3_start:number, e4_start:number,e5_start:number) => {
+  run = async (e1_start:number, e2_start:number, e3_start:number, e4_start:number,e5_start:number, test:(state:number[]) => void):Promise<void> => {
 
+    /*
     while(!this.socket.connected){
       console.log("Waiting for socket connection")
       await this.delay(3000)
@@ -461,6 +459,8 @@ export class Agent {
     
     console.log(`connected to socket with id: ${this.socket.id}`)
     
+    */
+
     let adaptionCounter = 0;
     let action_index;
     this.getUIElement(0).setState(e1_start);
@@ -477,7 +477,7 @@ export class Agent {
     let intervalID = setInterval(() => {
         
         action_index = this.get_next_action(this.getEpsilon())
-        console.log('Agent Taking action: '+this.actions[action_index])
+        //console.log('Agent Taking action: '+this.actions[action_index])
 
         let old_e1 = this.getUIElement(0).getState()
         let old_e2 = this.getUIElement(1).getState()
@@ -498,12 +498,14 @@ export class Agent {
         // Update Q-value for the previous state and action pair
         let new_q_value = old_q_value + (this.getAplha() * temporal_difference)
         this.getQ_Values()[old_e1][old_e2][old_e3][old_e4][old_e5][old_emotion][action_index] = new_q_value
-        
+        /*
         console.log("Adaption Count: "+adaptionCounter)
         console.log("New State:")
         console.log(this.getStateSpace())
         console.log("Total Reward: "+this.getRewardSum())
         console.log()
+
+        */
 
         // Stop Condition
         adaptionCounter++;
@@ -511,7 +513,10 @@ export class Agent {
         if(adaptionCounter === 1000){
           clearInterval(intervalID)
           console.log("End")
-        } 
-    },1000*0.05)
+        }
+        test(this.getStateSpace())
+        return this.getStateSpace();
+    },1000*10)
+
   }
 }
