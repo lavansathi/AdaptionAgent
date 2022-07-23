@@ -330,7 +330,7 @@ export class Agent {
     console.log('Training Complete!')
   }
 
-  public run = async (callback: (state:number[]) => void): Promise<void> => {
+  public run = async (callback: (state:number[]) => void, intervalTimer:number): Promise<void> => {
 
     /*
     while(!this.socket.connected){
@@ -400,7 +400,7 @@ export class Agent {
         adaptionCounter++;
 
         callback(this.getStateSpace());
-    }, 1000 * 0.20)
+    }, 1000 * intervalTimer)
   }
 
   public stop = () => {

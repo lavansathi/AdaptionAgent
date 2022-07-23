@@ -20,7 +20,7 @@ const agent = new Agent(uiElementArr)
 
 //console.log(util.inspect(agent.getQ_values(),false,null,true))
 
-agent.run(test)
+agent.run(test,2)
 
 // const file = fs.createWriteStream('qtable.txt');
 
