@@ -22,34 +22,34 @@ export class Agent {
     this.setupAgent()
   }
     
-  getUIElement = (element:number) => {
+  private getUIElement = (element:number) => {
     return this.UIElements[element];
   }
-  getUIElements = ():UIElement[] => {
+  private getUIElements = ():UIElement[] => {
     return this.UIElements;
   }
-  getEmotionalState = ():EmotionalState => {
+  private getEmotionalState = ():EmotionalState => {
     return this.emotionalState;
   }
-  setRewardsTable = (rewardsArr:any[]) => {
+  private setRewardsTable = (rewardsArr:any[]) => {
     this.rewardTable = rewardsArr;
   }
-  setQ_Values = (qtable:any[]) => {
+  public setQ_Values = (qtable:any[]) => {
     this.qTable = qtable;
   }
-  getQ_values = ():any[] => {
+  public getQ_values = ():any[] => {
     return this.qTable;
   }
-  setActions = (actions:string[]) => {
+  private setActions = (actions:string[]) => {
     this.actions = actions;
   }
-  setRewardSum = (reward:number) => {
+  private setRewardSum = (reward:number) => {
     this.rewardSum += reward;
   }
-  getRewardSum = ():number => {
+  private getRewardSum = ():number => {
     return this.rewardSum;
   }
-  getStateSpace = ():number[] => {
+  private getStateSpace = ():number[] => {
     let stateSpaceArr = []
 
     for (let i = 0; i < this.getUIElements().length; i++) {
@@ -70,7 +70,7 @@ export class Agent {
     }
   }
 
-  is_terminal_state = () => {
+  private is_terminal_state = () => {
     if(this.getRewardSum() == 1000){
       return true
     } else {
@@ -78,7 +78,7 @@ export class Agent {
     }
   }
 
-  get_starting_state = () => {
+  private get_starting_state = () => {
     let emotion = this.getEmotionalState();
     const setElementStates = () => {
       for (let i = 0; i < this.UIElements.length; i++) {
@@ -97,7 +97,7 @@ export class Agent {
     }
   }
 
-  update_user_emotion = async () => {
+  private update_user_emotion = async () => {
     let uiElements = [...this.getStateSpace()]
     uiElements.pop()
     let count:any = {};
@@ -117,7 +117,7 @@ export class Agent {
     }
   }
 
-  get_next_action = (epsilon:number):number => {
+  private get_next_action = (epsilon:number):number => {
     //Exploration vs explotation, the rate of exploration is decided by epsilon (0.9 epsilon = 10% exploration)
     let random = Math.random()
     if(random < epsilon){
@@ -133,7 +133,7 @@ export class Agent {
     }
   }
 
-  get_next_state = (action_index:number) => {
+  private get_next_state = (action_index:number) => {
     
     for (let i = 0; i < this.getUIElements().length; i++) {
       let element = this.getUIElement(i);
@@ -162,7 +162,7 @@ export class Agent {
   }
 
   // Helper funciton to create ndimensional arrays in JS, no native method exists
-  createNDimArray(dimensions:any) {
+  private createNDimArray(dimensions:any) {
     if (dimensions.length > 0) {
       var dim = dimensions[0];
       var rest = dimensions.slice(1);
@@ -176,7 +176,7 @@ export class Agent {
     }
    }
 
-  setupActions = () => {
+  private setupActions = () => {
     // Generate Actions based on elements and property count
     let actionsArr:string[] = []
     for (let i = 0; i < this.getUIElements().length; i++) {
@@ -189,7 +189,7 @@ export class Agent {
     this.setActions(actionsArr);
   }
 
-  setupQtable = () => {
+  private setupQtable = () => {
     // Initialize Q-table with 0 values for all pairs
     const arr: number[] = []
 
@@ -204,7 +204,7 @@ export class Agent {
     this.setQ_Values(this.createNDimArray(arr))
   }
 
-  setupRewards = () => {
+  private setupRewards = () => {
     //Initialize rewards table
 
     const arr: number[] = []
@@ -247,13 +247,13 @@ export class Agent {
     FillRewards(this.rewardTable);
   }
 
-  populateQtable = () => {
+  private populateQtable = () => {
     //[FontSize][ColorTheme][Destination][FontType][DialogVisibility][Emotion][Action]
     // Setting initial values for the Q-table
     //this.q_values[0][0][0][0][0][4][1] = 99
   }
 
-  setupAgent = () => {
+  private setupAgent = () => {
     this.setupActions();
     this.setupQtable();
     //this.populateQtable();
@@ -329,7 +329,7 @@ export class Agent {
     console.log('Training Complete!')
   }
 
-  run = async (uiElements:UIElement[], callback: (state:number[]) => void): Promise<void> => {
+  public run = async (uiElements:UIElement[], callback: (state:number[]) => void): Promise<void> => {
 
     /*
     while(!this.socket.connected){
@@ -408,6 +408,6 @@ export class Agent {
         }
         
         callback(this.getStateSpace());
-    }, 1000 * 0.02)
+    }, 1000 * 0.0002)
   }
 }
