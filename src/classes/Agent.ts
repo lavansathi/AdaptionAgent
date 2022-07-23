@@ -12,7 +12,6 @@ export class Agent {
   private rewardTable:any[] = [];
   private actions:string[] = []
   private rewardSum:number = 0;
-  private lastAction:(number|null) = null;
 
   constructor(uielements:UIElement[]){
     this.alpha = configObject.alpha;
@@ -60,7 +59,16 @@ export class Agent {
     return stateSpaceArr;
   }
 
-  delay = (ms:number) => new Promise(res => setTimeout(res, ms));
+  private delay = (ms:number) => new Promise(res => setTimeout(res, ms));
+
+  private FindValueOfCurrentState = (currentLayer: any[], depth: number):[] => {
+    if (depth <= this.UIElements.length - 1) {
+      return this.FindValueOfCurrentState(currentLayer[this.getUIElement(depth).getState()], depth + 1);       
+    } else {
+      const value = currentLayer[this.getEmotionalState().getCurrentEmotion()];
+      return value;   
+    }
+  }
 
   is_terminal_state = () => {
     if(this.getRewardSum() == 1000){
@@ -102,7 +110,7 @@ export class Agent {
       }
     }
     
-    if(count[0]=== 3){
+    if(this.getUIElement(0).getState() === 1 && this.getUIElement(1).getState() === 1 && this.getUIElement(2).getState() === 1){
       this.getEmotionalState().setCurrentEmotionalState(0)
     }else {
       this.getEmotionalState().setCurrentEmotionalState(6)
@@ -113,16 +121,9 @@ export class Agent {
     //Exploration vs explotation, the rate of exploration is decided by epsilon (0.9 epsilon = 10% exploration)
     let random = Math.random()
     if(random < epsilon){
-      let e1 = this.getUIElement(0).getState();
-      let e2 = this.getUIElement(1).getState();
-      let e3 = this.getUIElement(2).getState();
-      let e4 = this.getUIElement(3).getState();
-      let e5 = this.getUIElement(4).getState();
-      let emotion = this.getEmotionalState().getCurrentEmotion();
-
+      
       //Getting action array for specific state, choosing the index of action with highest value
-      let a = this.qTable[e1][e2][e3][e4][e5][emotion]
-      let index_of_best_action = a.reduce((iMax:any, x:any, i:any, arr:any) => x > arr[iMax] ? i : iMax, 0);
+      let index_of_best_action = this.FindValueOfCurrentState(this.qTable, 0).reduce((iMax:any, x:any, i:any, arr:any) => x > arr[iMax] ? i : iMax, 0);
       
       return index_of_best_action
 
@@ -158,7 +159,6 @@ export class Agent {
     
     // Update emotional state used as feedback to the action
     this.update_user_emotion();
-    this.lastAction = action_index;
   }
 
   // Helper funciton to create ndimensional arrays in JS, no native method exists
@@ -199,11 +199,9 @@ export class Agent {
 
     arr.push(this.getEmotionalState().getAvailableState_Count());
     arr.push(this.actions.length)
-      
-    let QtableArr = this.createNDimArray(arr);
-
+     
     //@ts-ignore
-    this.setQ_Values(QtableArr)
+    this.setQ_Values(this.createNDimArray(arr))
   }
 
   setupRewards = () => {
@@ -217,39 +215,42 @@ export class Agent {
 
     arr.push(this.getEmotionalState().getAvailableState_Count());
 
-    let arrRewards = this.createNDimArray(arr);
-
     //@ts-ignore
-    this.setRewardsTable(arrRewards)
+    this.setRewardsTable(this.createNDimArray(arr))
 
-    let rewardArray = this.rewardTable
     // [Element1][Element2][Element3][Element4][Element5][Emotional_State]
-    for (let m = 0; m < this.getUIElement(0).getState_Count(); m++) {
-      for (let n = 0; n < this.getUIElement(1).getState_Count(); n++) {
-        for (let o = 0; o < this.getUIElement(2).getState_Count(); o++) {
-          for (let p = 0; p < this.getUIElement(3).getState_Count(); p++) {
-            for (let q = 0; q < this.getUIElement(4).getState_Count(); q++) {
-              
-              // Happy
-              rewardArray[m][n][o][p][q][0] = 5;
-              // Surprised
-              rewardArray[m][n][o][p][q][2] = 2;
-              // Negative rewards
-              rewardArray[m][n][o][p][q][4] = -1;
-              rewardArray[m][n][o][p][q][5] = -3;
-              rewardArray[m][n][o][p][q][6] = -6;
-            }
-          }
+    const emotionValues: Record<number, number> = {
+      0: 5,  // Happiness
+      1: 0,  // Sadness
+      2: 2,  // Surprise
+      3: 0,  // Fear
+      4: -1, // Anger
+      5: -3, // Disgust
+      6: -6  // Contempt
+    }
+    
+    const FillRewards = (currentLayer: any[]) => {
+      if (!Array.isArray(currentLayer[0])) {
+        const keys = Object.keys(emotionValues);
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i];
+          const value = emotionValues[+key];
+
+          currentLayer[i] = value;
+        }
+      } else {
+        for (let i = 0; i < currentLayer.length; i++) {
+          FillRewards(currentLayer[i]);
         }
       }
     }
+    FillRewards(this.rewardTable);
   }
 
   populateQtable = () => {
     //[FontSize][ColorTheme][Destination][FontType][DialogVisibility][Emotion][Action]
     // Setting initial values for the Q-table
     //this.q_values[0][0][0][0][0][4][1] = 99
-    
   }
 
   setupAgent = () => {
@@ -259,7 +260,7 @@ export class Agent {
     this.setupRewards();
   }
 
-  get_best_adaption = (e1_start:number, e2_start:number, e3_start:number, e4_start:number, e5_start:number,emotion_start:number):number[] => {
+  private get_best_adaption = (e1_start:number, e2_start:number, e3_start:number, e4_start:number, e5_start:number,emotion_start:number):number[] => {
     this.getUIElement(0).setState(e1_start);
     this.getUIElement(1).setState(e2_start);
     this.getUIElement(2).setState(e3_start);
@@ -293,7 +294,7 @@ export class Agent {
     return best_adaption
   }
 
-  train = (training_range:number) => {
+  private train = (training_range:number) => {
     let action_index;
     for (let i = 0; i < training_range; i++) {
       this.get_starting_state();
@@ -328,7 +329,7 @@ export class Agent {
     console.log('Training Complete!')
   }
 
-  run = async (e1_start:number, e2_start:number, e3_start:number, e4_start:number,e5_start:number, test:(state:number[]) => void):Promise<void> => {
+  run = async (uiElements:UIElement[], callback: (state:number[]) => void): Promise<void> => {
 
     /*
     while(!this.socket.connected){
@@ -339,15 +340,16 @@ export class Agent {
     console.log(`connected to socket with id: ${this.socket.id}`)
     
     */
+   
+   
+   let adaptionCounter = 0;
+   let action_index;
 
-    let adaptionCounter = 0;
-    let action_index;
-    this.getUIElement(0).setState(e1_start);
-    this.getUIElement(1).setState(e2_start);
-    this.getUIElement(2).setState(e3_start);
-    this.getUIElement(3).setState(e4_start);
-    this.getUIElement(4).setState(e5_start);
-    await this.update_user_emotion();
+   for (let i = 0; i < uiElements.length; i++) {
+     this.getUIElement(i).setState(uiElements[i].getState());
+   }
+
+   await this.update_user_emotion();
 
     console.log('Initial State:')
     console.log(this.getStateSpace())
@@ -357,37 +359,55 @@ export class Agent {
         
         action_index = this.get_next_action(this.epsilon)
         //console.log('Agent Taking action: '+this.actions[action_index])
+        const oldStates: number[] = [];
 
-        let old_e1 = this.getUIElement(0).getState()
-        let old_e2 = this.getUIElement(1).getState()
-        let old_e3 = this.getUIElement(2).getState()
-        let old_e4 = this.getUIElement(3).getState()
-        let old_e5 = this.getUIElement(4).getState()
-        let old_emotion = this.getEmotionalState().getCurrentEmotion()
+        for (let i = 0; i < this.UIElements.length; i++) {
+          oldStates.push(this.getUIElement(i).getState());
+        }
+        oldStates.push(this.getEmotionalState().getCurrentEmotion());
+        oldStates.push(action_index)
+
+        const getQTableValue = (currentLayer: any[], depth: number): number => {
+          if (depth < oldStates.length - 1) {
+            return getQTableValue(currentLayer[oldStates[depth]], depth + 1);
+          } 
+          return currentLayer[oldStates[depth]];
+        }
+
+        const setQTableValue = (currentLayer: any[], depth: number, value: number): void => {
+          if (depth < oldStates.length - 1) {
+            return setQTableValue(currentLayer[oldStates[depth]], depth + 1, value);
+          }
+          // @ts-ignore 
+          currentLayer[oldStates[depth]] = value;
+        }
 
         // Move to next state
         this.get_next_state(action_index)
 
         // Calculate temporal_difference
-        let reward = this.rewardTable[this.getUIElement(0).getState()][this.getUIElement(1).getState()][this.getUIElement(2).getState()][this.getUIElement(3).getState()][this.getUIElement(4).getState()][this.getEmotionalState().getCurrentEmotion()]
+        let reward = this.FindValueOfCurrentState(this.rewardTable, 0);
+        // @ts-ignore
         this.setRewardSum(reward)
-        let old_q_value = this.qTable[old_e1][old_e2][old_e3][old_e4][old_e5][old_emotion][action_index]
-        let temporal_difference = reward + (this.gamma * Math.max(...this.qTable[this.getUIElement(0).getState()][this.getUIElement(1).getState()][this.getUIElement(2).getState()][this.getUIElement(3).getState()][this.getUIElement(4).getState()][this.getEmotionalState().getCurrentEmotion()])) - old_q_value
+        
+        let old_q_value = getQTableValue(this.qTable, 0);
+        // @ts-ignore
+        let temporal_difference = reward + (this.gamma * Math.max(...this.FindValueOfCurrentState(this.qTable, 0))) - old_q_value
         
         // Update Q-value for the previous state and action pair
         let new_q_value = old_q_value + (this.alpha * temporal_difference)
-        this.qTable[old_e1][old_e2][old_e3][old_e4][old_e5][old_emotion][action_index] = new_q_value
+        setQTableValue(this.qTable, 0, new_q_value)
         
         console.log("Counter: "+adaptionCounter)
         console.log(this.getRewardSum())
 
         adaptionCounter++;
 
-        if(adaptionCounter === 1000){
+        if (adaptionCounter === 100000) {
           clearInterval(intervalID)
         }
-        test(this.getStateSpace())
-    },1000*0.1)
-
+        
+        callback(this.getStateSpace());
+    }, 1000 * 0.02)
   }
 }
