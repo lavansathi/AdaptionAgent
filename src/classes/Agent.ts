@@ -12,12 +12,13 @@ export class Agent {
   private rewardTable:any[] = [];
   private actions:string[] = []
   private rewardSum:number = 0;
+  private intervalID:(NodeJS.Timer|undefined);
 
-  constructor(uielements:UIElement[]){
+  constructor(uiElements: UIElement[]) {
     this.alpha = configObject.alpha;
     this.gamma = configObject.gamma;
     this.epsilon = configObject.epsilon;
-    this.UIElements = uielements;
+    this.UIElements = uiElements;
 
     this.setupAgent()
   }
@@ -329,7 +330,7 @@ export class Agent {
     console.log('Training Complete!')
   }
 
-  public run = async (uiElements:UIElement[], callback: (state:number[]) => void): Promise<void> => {
+  public run = async (callback: (state:number[]) => void): Promise<void> => {
 
     /*
     while(!this.socket.connected){
@@ -341,13 +342,8 @@ export class Agent {
     
     */
    
-   
    let adaptionCounter = 0;
    let action_index;
-
-   for (let i = 0; i < uiElements.length; i++) {
-     this.getUIElement(i).setState(uiElements[i].getState());
-   }
 
    await this.update_user_emotion();
 
@@ -355,7 +351,7 @@ export class Agent {
     console.log(this.getStateSpace())
     console.log()
 
-    let intervalID = setInterval(() => {
+    this.intervalID = setInterval(() => {
         
         action_index = this.get_next_action(this.epsilon)
         //console.log('Agent Taking action: '+this.actions[action_index])
@@ -403,11 +399,12 @@ export class Agent {
 
         adaptionCounter++;
 
-        if (adaptionCounter === 100000) {
-          clearInterval(intervalID)
-        }
-        
         callback(this.getStateSpace());
-    }, 1000 * 0.0002)
+    }, 1000 * 0.20)
   }
+
+  public stop = () => {
+    if(this.intervalID) clearInterval(this.intervalID)
+  }
+
 }
