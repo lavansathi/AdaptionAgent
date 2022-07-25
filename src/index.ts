@@ -13,7 +13,9 @@ const uiElementArr = [
   new UIElement(2,0,'ColorTheme'),
   new UIElement(2,0,'Destination'),
   new UIElement(2,0,'FontType'),
-  new UIElement(2,0,'DialogVisibility')
+  new UIElement(2,0,'DialogVisibility'),
+  new UIElement(2,0,'ExtraFeature'),
+  new UIElement(2,0,'ExtraFeature2'),
 ];
 
 const agent = new Agent(uiElementArr)
@@ -29,6 +31,6 @@ agent.run(test,2)
 // })
 
 
-// file.write(agent.getQ_values().toString());
+// file.write(JSON.stringify(agent.getQ_values()));
 
 // file.end();
