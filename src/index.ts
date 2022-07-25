@@ -14,8 +14,8 @@ const uiElementArr = [
   new UIElement(2,0,'Destination'),
   new UIElement(2,0,'FontType'),
   new UIElement(2,0,'DialogVisibility'),
-  new UIElement(2,0,'ExtraFeature'),
-  new UIElement(2,0,'ExtraFeature2'),
+  // new UIElement(2,0,'ExtraFeature'),
+  // new UIElement(2,0,'ExtraFeature2'),
 ];
 
 const agent = new Agent(uiElementArr)

@@ -111,7 +111,11 @@ export class Agent {
       }
     }
     
-    if(this.getUIElement(0).getState() === 1 && this.getUIElement(1).getState() === 1 && this.getUIElement(2).getState() === 1){
+    if(this.getUIElement(0).getState() === 1 
+    && this.getUIElement(1).getState() === 1 
+    && this.getUIElement(2).getState() === 1
+    && this.getUIElement(3).getState() === 0 
+    && this.getUIElement(4).getState() === 0){
       this.getEmotionalState().setCurrentEmotionalState(0)
     }else {
       this.getEmotionalState().setCurrentEmotionalState(6)
